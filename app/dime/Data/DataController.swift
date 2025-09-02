@@ -30,7 +30,7 @@ enum CustomError: Swift.Error, CustomLocalizedStringResourceConvertible {
 class DataController: ObservableObject {
     static let shared = DataController()
 
-    var container = NSPersistentCloudKitContainer(name: "MainModel")
+    var container = NSPersistentContainer(name: "MainModel")
 
     init() {
         let description = NSPersistentStoreDescription()
@@ -40,19 +40,7 @@ class DataController: ObservableObject {
         description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
         description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
 
-//        let keyValueStore = NSUbiquitousKeyValueStore.default
-//
-//        if keyValueStore.object(forKey: "icloud_sync") == nil {
-//            keyValueStore.set(true, forKey: "icloud_sync")
-//        }
-//
-//        if !keyValueStore.bool(forKey: "icloud_sync") {
-//            description.cloudKitContainerOptions = nil
-//        } else {
-//            description.cloudKitContainerOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: "iCloud.com.rafaelsoh.dime")
-//        }
 
-        description.cloudKitContainerOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: "iCloud.com.rafaelsoh.dime")
 
         let groupID = "group.com.rafaelsoh.dime"
 

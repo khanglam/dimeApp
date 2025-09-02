@@ -734,9 +734,8 @@ struct ImportDataView: View {
                                     }
 
                                     let categoryColumnIndex = selectedColumns[0]
-                                    uniqueCategories = columns[categoryColumnIndex].unique().map {
-                                        MatchedCategory(excelValue: $0, income: false)
-                                    }
+                                    let uniqueCsvCategories = columns[categoryColumnIndex].unique()
+                                    uniqueCategories = smartMatchCategories(uniqueCsvCategories)
 
                                     columnSelectionCompleted = true
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -950,6 +949,73 @@ struct ImportDataView: View {
         }
 
         return nil
+    }
+    
+    func smartMatchCategories(_ csvCategories: [String]) -> [MatchedCategory] {
+        let expenseCategories = dataController.getAllCategories(income: false)
+        let incomeCategories = dataController.getAllCategories(income: true)
+        let allCategories = expenseCategories + incomeCategories
+        
+        return csvCategories.map { csvValue in
+            let trimmedValue = csvValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // 1. Exact match (case-insensitive)
+            if let exactMatch = allCategories.first(where: { $0.wrappedName.lowercased() == trimmedValue.lowercased() }) {
+                return MatchedCategory(excelValue: csvValue, income: exactMatch.income, category: exactMatch)
+            }
+            
+            // 2. Partial match (contains)
+            if let partialMatch = allCategories.first(where: { 
+                $0.wrappedName.lowercased().contains(trimmedValue.lowercased()) || 
+                trimmedValue.lowercased().contains($0.wrappedName.lowercased())
+            }) {
+                return MatchedCategory(excelValue: csvValue, income: partialMatch.income, category: partialMatch)
+            }
+            
+            // 3. Keyword-based matching
+            let keywordMatches = findCategoryByKeywords(trimmedValue, in: allCategories)
+            if let keywordMatch = keywordMatches.first {
+                return MatchedCategory(excelValue: csvValue, income: keywordMatch.income, category: keywordMatch)
+            }
+            
+            // 4. Income detection
+            let isIncome = detectIncomeFromString(trimmedValue)
+            
+            // 5. No match found - return unmatched with smart income classification
+            return MatchedCategory(excelValue: csvValue, income: isIncome, category: nil)
+        }
+    }
+    
+    func findCategoryByKeywords(_ csvValue: String, in categories: [Category]) -> [Category] {
+        let value = csvValue.lowercased()
+        
+        let keywordMap: [String: [String]] = [
+            "food": ["restaurant", "dining", "cafe", "coffee", "lunch", "dinner", "breakfast", "grocery", "supermarket", "food", "eating", "meal", "kitchen", "cooking"],
+            "transport": ["gas", "fuel", "petrol", "uber", "taxi", "lyft", "metro", "bus", "train", "parking", "toll", "transport", "travel", "car", "vehicle"],
+            "shopping": ["amazon", "store", "retail", "mall", "shop", "purchase", "buy", "online", "clothing", "clothes"],
+            "entertainment": ["movie", "cinema", "netflix", "spotify", "game", "entertainment", "fun", "hobby", "music", "streaming"],
+            "utilities": ["electric", "water", "gas", "internet", "phone", "utility", "bill", "subscription"],
+            "health": ["doctor", "hospital", "pharmacy", "medical", "health", "medicine", "dental", "clinic"],
+            "home": ["rent", "mortgage", "home", "house", "repair", "maintenance", "furniture", "decoration"]
+        ]
+        
+        for (categoryType, keywords) in keywordMap {
+            if keywords.contains(where: { value.contains($0) }) {
+                // Find matching category by type
+                if let match = categories.first(where: { $0.wrappedName.lowercased().contains(categoryType) }) {
+                    return [match]
+                }
+            }
+        }
+        
+        return []
+    }
+    
+    func detectIncomeFromString(_ value: String) -> Bool {
+        let incomeKeywords = ["salary", "paycheck", "wage", "income", "dividend", "refund", "cashback", "bonus", "payment", "deposit", "transfer in", "credit"]
+        let lowercaseValue = value.lowercased()
+        
+        return incomeKeywords.contains(where: { lowercaseValue.contains($0) })
     }
 
     func makeAttributedString() -> AttributedString {

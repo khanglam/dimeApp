@@ -7,3 +7,11 @@ xcuserdata/
 
 ## MacOS
 .DS_Store
+/app/dime.xcodeproj/project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+/CLAUDE.md
+/cursor.md
+/.idea/.gitignore
+/.idea/dimeApp.iml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/vcs.xml
