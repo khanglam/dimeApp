@@ -6,6 +6,7 @@
 //
 
 import ConfettiSwiftUI
+import CoreData
 import Foundation
 import SwiftUI
 import UIKit
@@ -83,6 +84,9 @@ struct ImportDataView: View {
     @State var processingState = ProcessingState.loading
     @State var errorMessage = "Invalid dates in date column."
     @State var confettiNumber = 0
+    
+    @State var duplicatesSkipped = 0
+    @State var transactionsAdded = 0
 
     var numberOfLinkedCategories: Int {
         uniqueCategories.filter { $0.category != nil }.count
@@ -165,6 +169,29 @@ struct ImportDataView: View {
 
 //                            .font(.system(size: 22, weight: .medium, design: .rounded))
                             .foregroundColor(Color.IncomeGreen)
+                        
+                        if duplicatesSkipped > 0 {
+                            Text("\(transactionsAdded) added, \(duplicatesSkipped) duplicates skipped")
+                                .font(.system(.subheadline, design: .rounded).weight(.medium))
+                                .foregroundColor(Color.SubtitleText)
+                        } else {
+                            Text("\(transactionsAdded) transactions added")
+                                .font(.system(.subheadline, design: .rounded).weight(.medium))
+                                .foregroundColor(Color.SubtitleText)
+                        }
+                        
+                        Button {
+                            dismiss()
+                        } label: {
+                            Text("Okay")
+                                .font(.system(.title3, design: .rounded).weight(.semibold))
+                                .frame(height: 50)
+                                .frame(maxWidth: .infinity)
+                                .foregroundColor(Color.LightIcon)
+                                .background(Color.DarkBackground, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                        }
+                        .buttonStyle(BouncyButton(duration: 0.2, scale: 0.8))
+                        .padding(.top, 20)
                     case .error:
                         Image(systemName: "x")
                             .font(.system(.title2, design: .rounded).weight(.semibold))
@@ -816,11 +843,7 @@ struct ImportDataView: View {
             }
         }
         .onChange(of: processingState) { newValue in
-            if newValue == .success {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    dismiss()
-                }
-            }
+            // Removed auto-dismiss - user now controls dismissal with "Okay" button
         }
         .confettiCannon(counter: $confettiNumber, num: 50, openingAngle: Angle(degrees: 0), closingAngle: Angle(degrees: 360), radius: 200)
     }
@@ -900,12 +923,23 @@ struct ImportDataView: View {
 
         let categoryDictionary: [String: Category] = Dictionary(uniqueKeysWithValues: uniqueCategories.map { ($0.excelValue, $0.category!) })
 
+        duplicatesSkipped = 0
+        transactionsAdded = 0
+
         rows.forEach { row in
-//            let rowCategory = categoryDictionary[row[categoryColumnIndex]]
             if let transactionDate = dateFormatter.date(from: row[dateColumnIndex]) {
                 if let rowCategory = categoryDictionary[row[categoryColumnIndex]] {
                     if let transactionAmount = Double(row[amountColumnIndex]) {
-                        _ = dataController.newTransaction(note: row[noteColumnIndex], category: rowCategory, income: rowCategory.income, amount: abs(transactionAmount), date: transactionDate, repeatType: 0, repeatCoefficient: 1, delay: false)
+                        let note = row[noteColumnIndex].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? rowCategory.wrappedName : row[noteColumnIndex]
+                        let amount = abs(transactionAmount)
+                        
+                        // Check for duplicates before creating transaction
+                        if isDuplicateTransaction(amount: amount, date: transactionDate) {
+                            duplicatesSkipped += 1
+                        } else {
+                            _ = dataController.newTransaction(note: note, category: rowCategory, income: rowCategory.income, amount: amount, date: transactionDate, repeatType: 0, repeatCoefficient: 1, delay: false)
+                            transactionsAdded += 1
+                        }
                     } else {
                         processingState = .error
                         errorMessage = "Invalid values in amount column."
@@ -1016,6 +1050,37 @@ struct ImportDataView: View {
         let lowercaseValue = value.lowercased()
         
         return incomeKeywords.contains(where: { lowercaseValue.contains($0) })
+    }
+    
+    func isDuplicateTransaction(amount: Double, date: Date) -> Bool {
+        let itemRequest: NSFetchRequest<Transaction> = Transaction.fetchRequest()
+        
+        // Check for transactions on the same date
+        let calendar = Calendar.current
+        let targetDate = calendar.startOfDay(for: date)
+        let nextDay = calendar.date(byAdding: .day, value: 1, to: targetDate)!
+        
+        let datePredicate = NSPredicate(format: "%K >= %@ AND %K < %@", 
+                                       #keyPath(Transaction.date), targetDate as CVarArg,
+                                       #keyPath(Transaction.date), nextDay as CVarArg)
+        
+        // Use double precision-safe comparison (within 0.01 tolerance)
+        let roundedAmount = round(amount * 100) / 100
+        let amountLower = roundedAmount - 0.01
+        let amountUpper = roundedAmount + 0.01
+        let amountPredicate = NSPredicate(format: "%K >= %f AND %K <= %f", 
+                                         #keyPath(Transaction.amount), amountLower,
+                                         #keyPath(Transaction.amount), amountUpper)
+        
+        let compoundPredicate = NSCompoundPredicate(type: .and, subpredicates: [
+            datePredicate, amountPredicate
+        ])
+        
+        itemRequest.predicate = compoundPredicate
+        itemRequest.fetchLimit = 1
+        
+        let results = dataController.results(for: itemRequest)
+        return !results.isEmpty
     }
 
     func makeAttributedString() -> AttributedString {
