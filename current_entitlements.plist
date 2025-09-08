@@ -1,0 +1,14 @@
+[Dict]
+	[Key] application-identifier
+	[Value]
+		[String] W9CYP722AX.com.klam.dime
+	[Key] com.apple.developer.team-identifier
+	[Value]
+		[String] W9CYP722AX
+	[Key] com.apple.security.application-groups
+	[Value]
+		[Array]
+			[String] group.com.klam.dime
+	[Key] get-task-allow
+	[Value]
+		[Bool] true

@@ -64,12 +64,12 @@ struct ContentView: View {
 //            UserDefaults(suiteName: "group.com.klam.dime")!.set(false, forKey: "newTransactionAdded")
 //            WidgetCenter.shared.reloadTimelines(ofKind: "TemplateTransactions")
 
+
             if appLockVM.isAppLockEnabled {
                 appLockVM.appLockValidation()
             }
 
-            let defaults =
-                UserDefaults(suiteName: "group.com.klam.dime") ?? UserDefaults.standard
+            let defaults = UserDefaults(suiteName: "group.com.klam.dime") ?? UserDefaults.standard
 
             if defaults.object(forKey: "firstDayOfMonth") == nil {
                 defaults.set(1, forKey: "firstDayOfMonth")
@@ -161,6 +161,9 @@ struct ContentView: View {
         }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .background || newPhase == .inactive {
+                // Save Core Data when app goes to background to prevent data loss on force quit
+                dataController.save()
+                
                 if appLockVM.isAppLockEnabled {
                     appLockVM.isAppUnLocked = false
                 }

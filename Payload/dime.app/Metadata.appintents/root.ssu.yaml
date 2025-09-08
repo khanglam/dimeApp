@@ -1,0 +1,161 @@
+apiVersion: ssu/v1
+nlu:
+  shortcuts:
+    bundleIdentifier: com.klam.dime
+    intents:
+    - metadata:
+        name: NewTransactionIntent_0
+        title: New Transaction
+      corpuses:
+        training:
+        - locale: en
+          utterances:
+          - '{${+prefix} }Log a new transaction in ${+applicationName}'
+        - locale: Base
+          utterances:
+          - Log a new transaction in ${+applicationName}
+    - metadata:
+        name: GetInsightsIntent_1
+        title: Get Insights
+      corpuses:
+        training:
+        - locale: en
+          utterances:
+          - '{${+prefix} }Get insights in ${+applicationName}'
+        - locale: Base
+          utterances:
+          - Get insights in ${+applicationName}
+    - metadata:
+        name: BudgetIntent_2
+        title: Get Budget Insights
+      corpuses:
+        training:
+        - locale: en
+          utterances:
+          - '{${+prefix} }Extract leftover amount for your budgets in ${+applicationName}'
+        - locale: Base
+          utterances:
+          - Extract leftover amount for your budgets in ${+applicationName}
+    - metadata:
+        name: +negative
+      corpuses:
+        training:
+        - locale: en
+          utterances:
+          - '{${+prefix} }${+standardAppShortcutNegatives}'
+        - locale: Base
+          utterances: []
+variables:
+- name: +applicationName
+  type: ssu/expansion
+  definitions:
+  - locale: en
+    synomyms:
+    - Dime
+  - locale: Base
+    synomyms:
+    - Dime
+- name: RepeatType
+  type: ssu/parameter
+  definitions:
+  - locale: en
+    synomyms:
+    - Daily
+    - Weekly
+    - Monthly
+  - locale: Base
+    synomyms:
+    - Daily
+    - Weekly
+    - Monthly
+- name: ExpenseCategoryEntity
+  type: ssu/parameter
+  definitions:
+  - locale: en
+    synomyms:
+    - Category
+  - locale: Base
+    synomyms:
+    - Category
+- name: ShortcutsInsightsTimeFrame
+  type: ssu/parameter
+  definitions:
+  - locale: en
+    synomyms:
+    - today
+    - this week
+    - this month
+    - this year
+    - all time
+  - locale: Base
+    synomyms:
+    - today
+    - this week
+    - this month
+    - this year
+    - all time
+- name: TransactionType
+  type: ssu/parameter
+  definitions:
+  - locale: en
+    synomyms:
+    - income
+    - expense
+  - locale: Base
+    synomyms:
+    - income
+    - expense
+- name: BudgetEntity
+  type: ssu/parameter
+  definitions:
+  - locale: en
+    synomyms:
+    - Budget
+  - locale: Base
+    synomyms:
+    - Budget
+- name: IncomeCategoryEntity
+  type: ssu/parameter
+  definitions:
+  - locale: en
+    synomyms:
+    - Category
+  - locale: Base
+    synomyms:
+    - Category
+- name: ShortcutsInsightsType
+  type: ssu/parameter
+  definitions:
+  - locale: en
+    synomyms:
+    - net total
+    - total income
+    - total expenditure
+  - locale: Base
+    synomyms:
+    - net total
+    - total income
+    - total expenditure
+- name: ShortcutsBudgetsType
+  type: ssu/parameter
+  definitions:
+  - locale: en
+    synomyms:
+    - overall budget
+    - categorical budget
+  - locale: Base
+    synomyms:
+    - overall budget
+    - categorical budget
+- name: +prefix
+  type: ssu/expansion
+  definitions:
+  - locale: en
+    synomyms:
+      $ref: ssu://Resources/prefix/en.yaml
+- name: +standardAppShortcutNegatives
+  type: ssu/expansion
+  definitions:
+  - locale: en
+    synomyms:
+      $ref: ssu://Resources/standardAppShortcutNegatives/en.yaml

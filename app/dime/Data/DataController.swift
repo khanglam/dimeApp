@@ -32,6 +32,9 @@ class DataController: ObservableObject {
 
     var container = NSPersistentContainer(name: "MainModel")
 
+    // Store debug info for the UI
+    @Published var debugMessages: [String] = []
+    
     init() {
         let description = NSPersistentStoreDescription()
 
@@ -40,20 +43,30 @@ class DataController: ObservableObject {
         description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
         description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
 
-
-
         let groupID = "group.com.klam.dime"
 
         if let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupID) {
             description.url = url.appendingPathComponent("Main.sqlite")
+            debugMessages.append("✅ Core Data store at: \(url.appendingPathComponent("Main.sqlite").path)")
+            print("✅ App Group working: \(url.path)")
+        } else {
+            debugMessages.append("❌ CRITICAL: App Group container not accessible!")
+            print("❌ CRITICAL: App Group '\(groupID)' not accessible!")
+            // Fallback to Documents directory if App Group fails
+            let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            description.url = documentsPath.appendingPathComponent("Main.sqlite")
+            debugMessages.append("📁 Fallback store: \(description.url!.path)")
+            print("📁 Using fallback: \(description.url!.path)")
         }
 
         container.persistentStoreDescriptions = [description]
 
         container.loadPersistentStores { description, error in
-
             if let error = error as NSError? {
+                self.debugMessages.append("❌ Core Data load error: \(error.localizedDescription)")
                 fatalError("Unresolved error \(error), \(error.userInfo) for \(description)")
+            } else {
+                self.debugMessages.append("✅ Core Data loaded at: \(description.url?.path ?? "unknown")")
             }
 
             self.container.viewContext.automaticallyMergesChangesFromParent = true
@@ -118,8 +131,15 @@ class DataController: ObservableObject {
 
     func save() {
         if container.viewContext.hasChanges {
-            try? container.viewContext.save()
-            WidgetCenter.shared.reloadAllTimelines()
+            do {
+                try container.viewContext.save()
+                debugMessages.append("✅ Save successful at \(Date().formatted(.dateTime.hour().minute().second()))")
+                print("💾 Core Data saved successfully")
+                WidgetCenter.shared.reloadAllTimelines()
+            } catch {
+                debugMessages.append("❌ Save failed: \(error.localizedDescription)")
+                print("❌ Core Data save failed: \(error)")
+            }
         }
     }
 
@@ -256,6 +276,7 @@ class DataController: ObservableObject {
             updateRecurringTransaction(transaction: transaction)
         }
 
+        debugMessages.append("🆕 Transaction: \(amount) \(income ? "income" : "expense")")
         save()
 
         return transaction
