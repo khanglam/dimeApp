@@ -7,6 +7,7 @@
 
 import Combine
 import ConfettiSwiftUI
+import CoreData
 import Foundation
 import StoreKit
 import SwiftUI
@@ -361,6 +362,10 @@ struct SettingsView: View {
 
               NavigationLink(destination: SettingsEraseView()) {
                 SettingsRowView(systemImage: "xmark.bin.fill", title: "Erase Data", colour: 114)
+              }
+              
+              NavigationLink(destination: DebugLogsView()) {
+                SettingsRowView(systemImage: "ladybug.fill", title: "Debug Logs", colour: 116)
               }
             }
             .padding(10)
@@ -897,4 +902,161 @@ struct SettingsCategoryView: View {
       .navigationBarHidden(true)
       .background(Color.PrimaryBackground)
   }
+}
+
+struct DebugLogsView: View {
+    @EnvironmentObject var dataController: DataController
+    @State private var runtimeInfo: [String] = []
+    @State private var transactionCount: Int = 0
+    @State private var showClearAlert = false
+    
+    var body: some View {
+        List {
+            Section("System Status") {
+                ForEach(dataController.debugMessages, id: \.self) { message in
+                    HStack {
+                        Text(getIcon(for: message))
+                        Text(message.replacingOccurrences(of: "✅ ", with: "").replacingOccurrences(of: "❌ ", with: "").replacingOccurrences(of: "📁 ", with: ""))
+                            .font(.system(.caption, design: .monospaced))
+                    }
+                    .foregroundColor(getColor(for: message))
+                }
+            }
+            
+            Section("Current State") {
+                ForEach(runtimeInfo, id: \.self) { info in
+                    HStack {
+                        Text(getIcon(for: info))
+                        Text(info.replacingOccurrences(of: "✅ ", with: "").replacingOccurrences(of: "❌ ", with: "").replacingOccurrences(of: "📊 ", with: ""))
+                            .font(.system(.caption, design: .monospaced))
+                    }
+                    .foregroundColor(getColor(for: info))
+                }
+            }
+            
+            Section("Actions") {
+                Button("🆕 Create Test Transaction") {
+                    createTestTransaction()
+                }
+                
+                Button("📊 Refresh Info") {
+                    loadRuntimeInfo()
+                }
+                
+                Button("💾 Force Save") {
+                    dataController.save()
+                }
+                
+                Button("🗑️ Clear Debug Logs") {
+                    showClearAlert = true
+                    
+                }.foregroundColor(.red)
+            }
+            
+            Section {
+                Text("") // Empty section for spacing
+                    .frame(height: 25)
+                    .listRowBackground(Color.clear)
+            }
+        }
+        .navigationTitle("Debug Logs")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            loadRuntimeInfo()
+        }
+        .alert("Clear Debug Logs", isPresented: $showClearAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear", role: .destructive) {
+                dataController.debugMessages.removeAll()
+                loadRuntimeInfo()
+            }
+        } message: {
+            Text("This will clear all debug messages from this session.")
+        }
+    }
+    
+    private func getIcon(for message: String) -> String {
+        if message.contains("✅") { return "✅" }
+        if message.contains("❌") { return "❌" }
+        if message.contains("📁") { return "📁" }
+        if message.contains("🗃️") { return "🗃️" }
+        if message.contains("📊") { return "📊" }
+        if message.contains("🆕") { return "🆕" }
+        return "ℹ️"
+    }
+    
+    private func getColor(for message: String) -> Color {
+        if message.contains("❌") { return .red }
+        if message.contains("✅") { return .green }
+        if message.contains("📊") { return .blue }
+        return .primary
+    }
+    
+    private func loadRuntimeInfo() {
+        runtimeInfo.removeAll()
+        
+        // Check App Group access
+        let groupID = "group.com.klam.dime"
+        if let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupID) {
+            runtimeInfo.append("✅ App Group accessible")
+            
+            let dbPath = groupURL.appendingPathComponent("Main.sqlite")
+            let dbExists = FileManager.default.fileExists(atPath: dbPath.path)
+            runtimeInfo.append("🗃️ DB exists in App Group: \(dbExists ? "YES" : "NO")")
+        } else {
+            runtimeInfo.append("❌ App Group NOT accessible")
+            
+            // Check fallback location
+            let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            let fallbackDB = documentsPath.appendingPathComponent("Main.sqlite")
+            let fallbackExists = FileManager.default.fileExists(atPath: fallbackDB.path)
+            runtimeInfo.append("🗃️ Fallback DB exists: \(fallbackExists ? "YES" : "NO")")
+        }
+        
+        // Check UserDefaults
+        if UserDefaults(suiteName: groupID) != nil {
+            runtimeInfo.append("✅ App Group UserDefaults OK")
+        } else {
+            runtimeInfo.append("❌ App Group UserDefaults failed")
+        }
+        
+        // Count transactions
+        countTransactions()
+    }
+    
+    private func createTestTransaction() {
+        let testAmount = Double.random(in: 1...100)
+        let testTransaction = dataController.newTransaction(
+            note: "Test \(Date().formatted(.dateTime.hour().minute()))",
+            category: nil,
+            income: Bool.random(),
+            amount: testAmount,
+            date: Date(),
+            repeatType: 0,
+            repeatCoefficient: 0,
+            delay: false
+        )
+        
+        if let id = testTransaction.id {
+            runtimeInfo.append("🆕 Test transaction created: $\(String(format: "%.2f", testAmount))")
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            countTransactions()
+        }
+    }
+    
+    private func countTransactions() {
+        let request: NSFetchRequest<Transaction> = Transaction.fetchRequest()
+        do {
+            let count = try dataController.container.viewContext.count(for: request)
+            transactionCount = count
+            
+            // Remove old count and add new one
+            runtimeInfo.removeAll { $0.contains("📊 Total transactions:") }
+            runtimeInfo.append("📊 Total transactions: \(count)")
+        } catch {
+            runtimeInfo.append("❌ Failed to count transactions: \(error.localizedDescription)")
+        }
+    }
 }
