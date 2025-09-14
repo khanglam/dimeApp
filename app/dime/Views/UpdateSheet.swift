@@ -63,7 +63,7 @@ struct UpdateAlert: View {
                     }
                     .foregroundColor(.PrimaryText)
 
-                    Text("Version \(UIApplication.appVersion ?? "") (\(UIApplication.buildNumber ?? "")) · 18 Sep 2023")
+                    Text("Version \(UIApplication.appVersion ?? "") (\(UIApplication.buildNumber ?? "")) · Sept 10 2025")
                         .font(.system(.subheadline, design: .rounded).weight(.medium))
 //                        .font(.system(size: 15, weight: .medium, design: .rounded))
                         .foregroundColor(.SubtitleText)

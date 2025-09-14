@@ -395,57 +395,57 @@ struct SettingsView: View {
                 SettingsRowView(systemImage: "flame.fill", title: "Feature Lab", colour: 122)
               }
 
-              Button {
-                showTipJarMenu = true
-              } label: {
-                SettingsRowView(systemImage: "heart.fill", title: "Tip Jar", colour: 123)
-              }
+//              Button {
+//                showTipJarMenu = true
+//              } label: {
+//                SettingsRowView(systemImage: "heart.fill", title: "Tip Jar", colour: 123)
+//              }
 
-              Button {
-                supportEmail.send(openURL: openURL)
-              } label: {
-                SettingsRowView(systemImage: "ladybug.fill", title: "Report Bug", colour: 124)
-              }
+//              Button {
+//                supportEmail.send(openURL: openURL)
+//              } label: {
+//                SettingsRowView(systemImage: "ladybug.fill", title: "Report Bug", colour: 124)
+//              }
 
-              Button {
-                featureRequestEmail.send(openURL: openURL)
-              } label: {
-                SettingsRowView(
-                  systemImage: "hand.wave.fill", title: "Feature Request", colour: 125)
-              }
+//              Button {
+//                featureRequestEmail.send(openURL: openURL)
+//              } label: {
+//                SettingsRowView(
+//                  systemImage: "hand.wave.fill", title: "Feature Request", colour: 125)
+//              }
 
-              Button {
-                let url = "https://apps.apple.com/app/id1635280255?action=write-review"
-                guard let writeReviewURL = URL(string: url)
-                else { fatalError("Expected a valid URL") }
-                UIApplication.shared.open(writeReviewURL, options: [:], completionHandler: nil)
-              } label: {
-                SettingsRowView(systemImage: "star.fill", title: "Rate on App Store", colour: 126)
-              }
+//              Button {
+//                let url = "https://apps.apple.com/app/id1635280255?action=write-review"
+//                guard let writeReviewURL = URL(string: url)
+//                else { fatalError("Expected a valid URL") }
+//                UIApplication.shared.open(writeReviewURL, options: [:], completionHandler: nil)
+//              } label: {
+//                SettingsRowView(systemImage: "star.fill", title: "Rate on App Store", colour: 126)
+//              }
 
-              Button {
-                shareSheet(url: "https://apps.apple.com/app/id1635280255")
-              } label: {
-                SettingsRowView(systemImage: "shareplay", title: "Share with Friends", colour: 127)
-              }
+//              Button {
+//                shareSheet(url: "https://apps.apple.com/app/id1635280255")
+//              } label: {
+//                SettingsRowView(systemImage: "shareplay", title: "Share with Friends", colour: 127)
+//              }
 
-              Button {
-                if let url = URL(string: "https://www.x.com/budgetwithdime") {
-                  UIApplication.shared.open(url)
-                }
-              } label: {
-                SettingsRowView(systemImage: "bird.fill", title: "Follow Dime on X", colour: 128)
-                  .frame(maxWidth: .infinity)
-              }
+//              Button {
+//                if let url = URL(string: "https://www.x.com/budgetwithdime") {
+//                  UIApplication.shared.open(url)
+//                }
+//              } label: {
+//                SettingsRowView(systemImage: "bird.fill", title: "Follow Dime on X", colour: 128)
+//                  .frame(maxWidth: .infinity)
+//              }
 
-              Button {
-                if let url = URL(string: "https://www.x.com/rarfell") {
-                  UIApplication.shared.open(url)
-                }
-              } label: {
-                SettingsRowView(
-                  systemImage: "camera.fill", title: "Follow Rafael on X", colour: 129)
-              }
+//              Button {
+//                if let url = URL(string: "https://www.x.com/rarfell") {
+//                  UIApplication.shared.open(url)
+//                }
+//              } label: {
+//                SettingsRowView(
+//                  systemImage: "camera.fill", title: "Follow Rafael on X", colour: 129)
+//              }
             }
             .padding(10)
             .background(Color.SettingsBackground, in: RoundedRectangle(cornerRadius: 9))
@@ -475,7 +475,7 @@ struct SettingsView: View {
                 }
             }
 
-            Text("Made with ❤️ by \(makeAttributedString()) from 🇸🇬")
+            Text("Enhanced by \(makeAttributedString())")
               .font(.system(.footnote, design: .rounded).weight(.medium))
 
               .foregroundColor(Color.SubtitleText)
@@ -543,9 +543,9 @@ struct SettingsView: View {
   }
 
   func makeAttributedString() -> AttributedString {
-    var string = AttributedString("Rafael")
+    var string = AttributedString("Khang")
     string.foregroundColor = Color.PrimaryText
-    string.link = URL(string: "https://www.x.com/rarfell")
+    string.link = URL(string: "https://www.x.com/khangtlam")
 
     return string
   }
@@ -912,28 +912,6 @@ struct DebugLogsView: View {
     
     var body: some View {
         List {
-            Section("System Status") {
-                ForEach(dataController.debugMessages, id: \.self) { message in
-                    HStack {
-                        Text(getIcon(for: message))
-                        Text(message.replacingOccurrences(of: "✅ ", with: "").replacingOccurrences(of: "❌ ", with: "").replacingOccurrences(of: "📁 ", with: ""))
-                            .font(.system(.caption, design: .monospaced))
-                    }
-                    .foregroundColor(getColor(for: message))
-                }
-            }
-            
-            Section("Current State") {
-                ForEach(runtimeInfo, id: \.self) { info in
-                    HStack {
-                        Text(getIcon(for: info))
-                        Text(info.replacingOccurrences(of: "✅ ", with: "").replacingOccurrences(of: "❌ ", with: "").replacingOccurrences(of: "📊 ", with: ""))
-                            .font(.system(.caption, design: .monospaced))
-                    }
-                    .foregroundColor(getColor(for: info))
-                }
-            }
-            
             Section("Actions") {
                 Button("🆕 Create Test Transaction") {
                     createTestTransaction()
@@ -951,6 +929,28 @@ struct DebugLogsView: View {
                     showClearAlert = true
                     
                 }.foregroundColor(.red)
+            }
+            
+            Section("System Status") {
+                ForEach(dataController.debugMessages, id: \.self) { message in
+                    HStack {
+//                        Text(getIcon(for: message))
+                        Text(message.replacingOccurrences(of: "✅ ", with: "").replacingOccurrences(of: "❌ ", with: "").replacingOccurrences(of: "📁 ", with: ""))
+                            .font(.system(.caption, design: .monospaced))
+                    }
+                    .foregroundColor(getColor(for: message))
+                }
+            }
+            
+            Section("Current State") {
+                ForEach(runtimeInfo, id: \.self) { info in
+                    HStack {
+                        Text(getIcon(for: info))
+                        Text(info.replacingOccurrences(of: "✅ ", with: "").replacingOccurrences(of: "❌ ", with: "").replacingOccurrences(of: "📊 ", with: ""))
+                            .font(.system(.caption, design: .monospaced))
+                    }
+                    .foregroundColor(getColor(for: info))
+                }
             }
             
             Section {
@@ -979,9 +979,9 @@ struct DebugLogsView: View {
         if message.contains("✅") { return "✅" }
         if message.contains("❌") { return "❌" }
         if message.contains("📁") { return "📁" }
-        if message.contains("🗃️") { return "🗃️" }
+        if message.contains("DB exists") { return "🗃️" }
         if message.contains("📊") { return "📊" }
-        if message.contains("🆕") { return "🆕" }
+        if message.contains("Test transaction") { return "🆕" }
         return "ℹ️"
     }
     
@@ -1002,7 +1002,7 @@ struct DebugLogsView: View {
             
             let dbPath = groupURL.appendingPathComponent("Main.sqlite")
             let dbExists = FileManager.default.fileExists(atPath: dbPath.path)
-            runtimeInfo.append("🗃️ DB exists in App Group: \(dbExists ? "YES" : "NO")")
+            runtimeInfo.append("DB exists in App Group: \(dbExists ? "YES" : "NO")")
         } else {
             runtimeInfo.append("❌ App Group NOT accessible")
             
@@ -1010,7 +1010,7 @@ struct DebugLogsView: View {
             let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
             let fallbackDB = documentsPath.appendingPathComponent("Main.sqlite")
             let fallbackExists = FileManager.default.fileExists(atPath: fallbackDB.path)
-            runtimeInfo.append("🗃️ Fallback DB exists: \(fallbackExists ? "YES" : "NO")")
+            runtimeInfo.append("Fallback DB exists: \(fallbackExists ? "YES" : "NO")")
         }
         
         // Check UserDefaults
@@ -1038,7 +1038,7 @@ struct DebugLogsView: View {
         )
         
         if let id = testTransaction.id {
-            runtimeInfo.append("🆕 Test transaction created: $\(String(format: "%.2f", testAmount))")
+            runtimeInfo.append("Test transaction created: $\(String(format: "%.2f", testAmount))")
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
